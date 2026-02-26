@@ -80,7 +80,7 @@
           "69.63.176.0/20",
           "69.171.224.0/19"
         ],
-        "outboundTag": "proxy-do"
+        "outboundTag": "proxy-ca"
       },
       {
         "type": "field",
@@ -104,7 +104,7 @@
           "domain:fbsbx.com",
           "domain:meta.com"
         ],
-        "outboundTag": "proxy-do"
+        "outboundTag": "proxy-ca"
       }
     ]
   }
