@@ -3,7 +3,7 @@ sleep 2
 # Transparent proxy routing for Xray (Asuswrt-Merlin)
 
 # Укажите IP-адреса устройств, трафик которых нужно проксировать
-TARGETS="YOUR_DEVICE_IP_1 YOUR_DEVICE_IP_2"
+TARGETS="YOUR_TARGET_IPS"
 
 for IP in $TARGETS; do
   # 1. Зачистка старых правил (предотвращает дублирование при перезапуске сети)
