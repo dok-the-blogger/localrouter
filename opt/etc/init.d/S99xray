@@ -1,0 +1,23 @@
+#!/bin/sh
+
+case "$1" in
+  start)
+    echo "Starting Xray engine..."
+    killall xray 2>/dev/null
+    /opt/sbin/xray run -c /opt/etc/xray/config.json > /dev/null 2>&1 &
+    echo "Xray engine is running."
+    ;;
+  stop)
+    echo "Stopping Xray engine..."
+    killall xray 2>/dev/null
+    ;;
+  restart)
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac
