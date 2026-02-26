@@ -45,12 +45,18 @@ chmod +x /opt/etc/init.d/S98do-tunnel
 chmod +x /opt/etc/init.d/S99xray
 chmod +x /jffs/scripts/nat-start
 
-# 8. Restart dispatcher
-echo "Restarting Xray..."
+# 8. Restart services
+echo "Restarting Xray and Tunnel..."
 if [ -x /opt/etc/init.d/S99xray ]; then
     /opt/etc/init.d/S99xray restart
 else
     echo "Warning: /opt/etc/init.d/S99xray is not executable or found."
+fi
+
+if [ -x /opt/etc/init.d/S98do-tunnel ]; then
+    /opt/etc/init.d/S98do-tunnel restart
+else
+    echo "Warning: /opt/etc/init.d/S98do-tunnel is not executable or found."
 fi
 
 # 9. Firewall update
