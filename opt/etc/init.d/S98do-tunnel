@@ -1,0 +1,10 @@
+#!/bin/sh
+
+ENABLED=yes
+PROCS=autossh
+export AUTOSSH_PATH=/opt/bin/ssh
+ARGS="-M 0 -f -N -D 127.0.0.1:1080 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o ConnectTimeout=5 -o ExitOnForwardFailure=yes -o Compression=no -o Ciphers=aes128-gcm@openssh.com,chacha20-poly1305@openssh.com -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /opt/etc/ssh/do_ss root@YOUR_DO_DROPLET_IP"
+DESC="DO SSH Tunnel"
+PATH=/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+. /opt/etc/init.d/rc.func

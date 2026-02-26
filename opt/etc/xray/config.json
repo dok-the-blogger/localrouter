@@ -1,0 +1,111 @@
+{
+  "log": {
+    "loglevel": "warning"
+  },
+  "inbounds": [
+    {
+      "port": 12345,
+      "protocol": "dokodemo-door",
+      "settings": {
+        "network": "tcp,udp",
+        "followRedirect": true
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls"]
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "shadowsocks",
+      "tag": "proxy-ru",
+      "settings": {
+        "servers": [
+          {
+            "address": "YOUR_SELECTEL_IP",
+            "port": 8443,
+            "method": "aes-256-gcm",
+            "password": "YOUR_SECRET_PASSWORD"
+          }
+        ]
+      }
+    },
+    {
+      "protocol": "shadowsocks",
+      "tag": "proxy-ca",
+      "settings": {
+        "servers": [
+          {
+            "address": "YOUR_SELECTEL_IP",
+            "port": 8444,
+            "method": "aes-256-gcm",
+            "password": "YOUR_SECRET_PASSWORD"
+          }
+        ]
+      }
+    },
+    {
+      "protocol": "socks",
+      "tag": "proxy-do",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 1080
+          }
+        ]
+      }
+    },
+    {
+      "protocol": "freedom",
+      "tag": "direct"
+    }
+  ],
+  "routing": {
+    "domainStrategy": "AsIs",
+    "rules": [
+      {
+        "type": "field",
+        "ip": ["geoip:private"],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "ip": [
+          "157.240.0.0/16",
+          "31.13.0.0/16",
+          "129.134.0.0/16",
+          "173.252.0.0/16",
+          "69.63.176.0/20",
+          "69.171.224.0/19"
+        ],
+        "outboundTag": "proxy-do"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "domain:kino.pub",
+          "domain:digital-cdn.net",
+          "domain:gemini.google.com",
+          "domain:aistudio.google.com",
+          "domain:googleapis.com"
+        ],
+        "outboundTag": "proxy-ca"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "domain:instagram.com",
+          "domain:cdninstagram.com",
+          "domain:instagram-cdn.com",
+          "domain:facebook.com",
+          "domain:fbcdn.net",
+          "domain:fbsbx.com",
+          "domain:meta.com"
+        ],
+        "outboundTag": "proxy-do"
+      }
+    ]
+  }
+}
