@@ -42,3 +42,15 @@ opkg install autossh openssh-client curl
     ```bash
     chmod 600 /opt/etc/ssh/do_ss
     ```
+
+## 4. Системные триггеры (JFFS)
+Для перехвата трафика необходимо восстановить скрипт фаервола в энергонезависимой памяти роутера.
+
+1. Скопируйте `nat-start` в директорию `/jffs/scripts/`.
+2. Замените `YOUR_DEVICE_IP_1` на реальные IP-адреса устройств.
+3. Выдайте права на выполнение:
+   ```bash
+   chmod +x /jffs/scripts/nat-start
+   ```
+
+4. Убедитесь, что в веб-интерфейсе роутера (Administration -> System) включена опция **"Enable JFFS custom scripts and configs"**.

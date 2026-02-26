@@ -1,0 +1,20 @@
+#!/bin/sh
+sleep 2
+# Transparent proxy routing for Xray (Asuswrt-Merlin)
+
+# Укажите IP-адреса устройств, трафик которых нужно проксировать
+TARGETS="YOUR_DEVICE_IP_1 YOUR_DEVICE_IP_2"
+
+for IP in $TARGETS; do
+  # 1. Зачистка старых правил (предотвращает дублирование при перезапуске сети)
+  iptables -t nat -D PREROUTING -s $IP -d 192.168.0.0/16 -j RETURN 2>/dev/null
+  iptables -t nat -D PREROUTING -s $IP -p tcp -j REDIRECT --to-ports 12345 2>/dev/null
+  iptables -t nat -D PREROUTING -s $IP -p udp --dport 53 -j REDIRECT --to-ports 12345 2>/dev/null
+
+  # 2. Накатываем активные правила (в обратном порядке для -I)
+  iptables -t nat -I PREROUTING -s $IP -p udp --dport 53 -j REDIRECT --to-ports 12345
+  iptables -t nat -I PREROUTING -s $IP -p tcp -j REDIRECT --to-ports 12345
+
+  # 3. Исключение локального трафика (Правило №1)
+  iptables -t nat -I PREROUTING -s $IP -d 192.168.0.0/16 -j RETURN
+done
