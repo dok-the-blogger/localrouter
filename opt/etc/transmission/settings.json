@@ -1,0 +1,11 @@
+{
+    "download-dir": "/tmp/mnt/router_disk/media/Downloads",
+    "incomplete-dir": "/tmp/mnt/router_disk/media/Incomplete",
+    "incomplete-dir-enabled": true,
+    "watch-dir": "/tmp/mnt/router_disk/media/Watch",
+    "watch-dir-enabled": true,
+    "trash-original-torrent-files": true,
+    "rpc-enabled": false,
+    "peer-port": 51413,
+    "port-forwarding-enabled": true
+}
