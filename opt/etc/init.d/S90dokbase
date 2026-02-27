@@ -1,0 +1,38 @@
+#!/bin/sh
+
+ENABLED=yes
+DESC="DOK Base App"
+APP_DIR="/opt/var/www/dokbase"
+APP_SCRIPT="app.py"
+PID_FILE="/opt/var/run/dokbase.pid"
+
+start() {
+    echo "Starting $DESC..."
+    if [ -d "$APP_DIR" ]; then
+        cd "$APP_DIR" || exit 1
+        # Запуск в фоне с сохранением PID
+        nohup python3 "$APP_SCRIPT" > /dev/null 2>&1 &
+        echo $! > "$PID_FILE"
+        echo "Done."
+    else
+        echo "Error: Directory $APP_DIR not found. Clone dokbase repo first."
+    fi
+}
+
+stop() {
+    echo "Stopping $DESC..."
+    if [ -f "$PID_FILE" ]; then
+        kill $(cat "$PID_FILE") 2>/dev/null
+        rm -f "$PID_FILE"
+        echo "Done."
+    else
+        echo "PID file not found. Is the app running?"
+    fi
+}
+
+case "$1" in
+    start) start ;;
+    stop) stop ;;
+    restart) stop; sleep 2; start ;;
+    *) echo "Usage: $0 {start|stop|restart}"; exit 1 ;;
+esac
