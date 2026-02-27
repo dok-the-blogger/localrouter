@@ -17,6 +17,16 @@ fi
 echo "Pulling latest changes..."
 git pull origin main
 
+# 4.1 Install Transmission
+echo "Installing Transmission..."
+/opt/bin/opkg install transmission-daemon-openssl
+
+# 4.2 Create Transmission directories
+echo "Creating Transmission directories..."
+mkdir -p /tmp/mnt/router_disk/media/Downloads
+mkdir -p /tmp/mnt/router_disk/media/Incomplete
+mkdir -p /tmp/mnt/router_disk/media/Watch
+
 # 5. Process templates and write to system paths
 # Templates are in relative paths: opt/etc/xray/config.json, etc.
 # Destinations are absolute paths: /opt/etc/xray/config.json, etc.
@@ -34,6 +44,40 @@ sed "s/YOUR_DO_DROPLET_IP/$DO_IP/g" opt/etc/init.d/S98do-tunnel > /opt/etc/init.
 # nat-start
 echo "Configuring Firewall..."
 sed "s/YOUR_TARGET_IPS/$TARGETS/g" jffs/scripts/nat-start > /jffs/scripts/nat-start
+
+# 5.1 Configure Transmission
+echo "Configuring Transmission..."
+TRANS_CONF_SRC="opt/etc/transmission/settings.json"
+TRANS_CONF_DEST="/opt/etc/transmission/settings.json"
+TRANS_INIT="/opt/etc/init.d/S88transmission"
+
+# Ensure destination directory exists
+mkdir -p /opt/etc/transmission
+
+# Calculate hashes
+if [ -f "$TRANS_CONF_DEST" ]; then
+    SRC_HASH=$(md5sum "$TRANS_CONF_SRC" | awk '{print $1}')
+    DEST_HASH=$(md5sum "$TRANS_CONF_DEST" | awk '{print $1}')
+else
+    SRC_HASH="src"
+    DEST_HASH="dest"
+fi
+
+if [ "$SRC_HASH" != "$DEST_HASH" ]; then
+    echo "Transmission config changed. Updating..."
+    if [ -x "$TRANS_INIT" ]; then
+        "$TRANS_INIT" stop
+        sleep 3
+    fi
+
+    cp "$TRANS_CONF_SRC" "$TRANS_CONF_DEST"
+
+    if [ -x "$TRANS_INIT" ]; then
+        "$TRANS_INIT" start
+    fi
+else
+    echo "Transmission config unchanged, skipping restart."
+fi
 
 # 6. Copy launcher
 echo "Copying Xray launcher..."
