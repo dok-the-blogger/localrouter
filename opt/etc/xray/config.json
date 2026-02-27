@@ -1,5 +1,6 @@
 {
   "log": {
+    "error": "/opt/var/log/xray-error.log",
     "loglevel": "warning"
   },
   "inbounds": [
