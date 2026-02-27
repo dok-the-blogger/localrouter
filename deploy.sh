@@ -137,13 +137,24 @@ service restart_dnsmasq
 
 echo "Checking DOK Base application..."
 APP_DIR="/opt/var/www/dokbase"
+SSH_KEY="/opt/etc/ssh/github_dokbase_ed25519"
 
 if [ ! -d "$APP_DIR" ]; then
     echo "Bootstrapping DOK Base for the first time..."
+
+    if [ ! -f "$SSH_KEY" ]; then
+        echo "Error: SSH key $SSH_KEY not found! Please generate it and add to GitHub Deploy Keys."
+        exit 1
+    fi
+
     mkdir -p /opt/var/www
     cd /opt/var/www || exit 1
-    git clone https://github.com/dok-the-blogger/dokbase.git || exit 1
+
+    GIT_SSH_COMMAND="ssh -i $SSH_KEY -o IdentitiesOnly=yes" git clone git@github.com:dok-the-blogger/dokbase.git || exit 1
     cd dokbase || exit 1
+
+    # Фиксируем ключ для будущих обновлений
+    git config core.sshCommand "ssh -i $SSH_KEY -o IdentitiesOnly=yes"
 
     # Безопасная замена шебанга
     sed 's|#!/bin/bash|#!/bin/sh|g' update.sh > update_tmp.sh && mv update_tmp.sh update.sh
@@ -152,6 +163,15 @@ if [ ! -d "$APP_DIR" ]; then
 else
     echo "DOK Base found. Triggering application update..."
     cd "$APP_DIR" || exit 1
+
+    if [ ! -f "$SSH_KEY" ]; then
+        echo "Error: SSH key $SSH_KEY not found! Cannot update repository."
+        exit 1
+    fi
+
+    # Принудительно мигрируем старые инсталляции на SSH
+    git remote set-url origin git@github.com:dok-the-blogger/dokbase.git
+    git config core.sshCommand "ssh -i $SSH_KEY -o IdentitiesOnly=yes"
 
     # Сбрасываем возможные локальные изменения и стягиваем код
     git checkout -- .
