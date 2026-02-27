@@ -135,5 +135,35 @@ fi
 echo "Restarting dnsmasq..."
 service restart_dnsmasq
 
+echo "Checking DOK Base application..."
+APP_DIR="/opt/var/www/dokbase"
+
+if [ ! -d "$APP_DIR" ]; then
+    echo "Bootstrapping DOK Base for the first time..."
+    mkdir -p /opt/var/www
+    cd /opt/var/www || exit 1
+    git clone https://github.com/dok-the-blogger/dokbase.git || exit 1
+    cd dokbase || exit 1
+
+    # Безопасная замена шебанга
+    sed 's|#!/bin/bash|#!/bin/sh|g' update.sh > update_tmp.sh && mv update_tmp.sh update.sh
+    chmod +x update.sh
+    ./update.sh || exit 1
+else
+    echo "DOK Base found. Triggering application update..."
+    cd "$APP_DIR" || exit 1
+
+    # Сбрасываем возможные локальные изменения и стягиваем код
+    git checkout -- .
+    git pull origin main || exit 1
+
+    # Перестраховка шебанга после обновления кода
+    sed 's|#!/bin/bash|#!/bin/sh|g' update.sh > update_tmp.sh && mv update_tmp.sh update.sh
+    chmod +x update.sh
+
+    # Передаем управление скрипту приложения
+    ./update.sh || exit 1
+fi
+
 # 10. Success message
 echo "Deployment completed successfully!"
