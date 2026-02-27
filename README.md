@@ -62,3 +62,8 @@ chmod 600 /opt/etc/ssh/do_ss
 
 ## 4. JFFS
 Убедитесь, что в веб-интерфейсе роутера (Administration -> System) включена опция **"Enable JFFS custom scripts and configs"**.
+
+## 5. Ad-Blocking (Xray Blackhole)
+Xray используется не только для обхода блокировок, но и как сетевой санитар.
+В конфигурации реализована фильтрация рекламного и трекингового трафика на уровне доменов.
+Подробнее о логике работы и приоритетах правил читайте в [docs/XRAY_CONFIG.md](docs/XRAY_CONFIG.md).
