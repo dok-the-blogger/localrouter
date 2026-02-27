@@ -19,7 +19,7 @@ git pull origin main
 
 # 4.1 Install Transmission and other dependencies
 echo "Installing packages..."
-/opt/bin/opkg install transmission-daemon-openssl
+/opt/bin/opkg install transmission-daemon
 /opt/bin/opkg install python3 python3-pip git-http
 
 # 4.2 Create Transmission directories
