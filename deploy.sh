@@ -17,9 +17,10 @@ fi
 echo "Pulling latest changes..."
 git pull origin main
 
-# 4.1 Install Transmission
-echo "Installing Transmission..."
+# 4.1 Install Transmission and other dependencies
+echo "Installing packages..."
 /opt/bin/opkg install transmission-daemon-openssl
+/opt/bin/opkg install python3 python3-pip git-http
 
 # 4.2 Create Transmission directories
 echo "Creating Transmission directories..."
@@ -87,6 +88,14 @@ cp opt/etc/init.d/S99xray /opt/etc/init.d/S99xray
 echo "Copying Swap mounter..."
 cp opt/etc/init.d/S01swap /opt/etc/init.d/S01swap
 
+echo "Configuring dnsmasq..."
+mkdir -p /jffs/configs
+cp jffs/configs/dnsmasq.conf.add /jffs/configs/dnsmasq.conf.add
+
+echo "Copying DOK Base launcher..."
+cp opt/etc/init.d/S90dokbase /opt/etc/init.d/S90dokbase
+chmod +x /opt/etc/init.d/S90dokbase
+
 # 7. chmod
 echo "Setting permissions..."
 chmod +x /opt/etc/init.d/S98do-tunnel
@@ -122,6 +131,9 @@ if [ -x /jffs/scripts/nat-start ]; then
 else
     echo "Warning: /jffs/scripts/nat-start is not executable or found."
 fi
+
+echo "Restarting dnsmasq..."
+service restart_dnsmasq
 
 # 10. Success message
 echo "Deployment completed successfully!"
