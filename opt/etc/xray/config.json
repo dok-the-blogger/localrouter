@@ -61,11 +61,22 @@
     {
       "protocol": "freedom",
       "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "block"
     }
   ],
   "routing": {
     "domainStrategy": "AsIs",
     "rules": [
+      {
+        "type": "field",
+        "domain": [
+          "geosite:category-ads-all"
+        ],
+        "outboundTag": "block"
+      },
       {
         "type": "field",
         "ip": ["geoip:private"],
