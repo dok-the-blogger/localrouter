@@ -4,7 +4,7 @@ case "$1" in
   start)
     echo "Starting Xray engine..."
     killall xray 2>/dev/null
-    /opt/sbin/xray run -c /opt/etc/xray/config.json > /dev/null 2>&1 &
+    nohup /opt/sbin/xray run -c /opt/etc/xray/config.json > /dev/null 2>&1 &
     echo "Xray engine is running."
     ;;
   stop)
