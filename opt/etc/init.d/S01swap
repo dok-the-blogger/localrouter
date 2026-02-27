@@ -1,0 +1,32 @@
+#!/bin/sh
+
+SWAP_FILE="/tmp/mnt/router_disk/entware/swap.file"
+
+start() {
+    if [ -f "$SWAP_FILE" ]; then
+        if grep -q "$SWAP_FILE" /proc/swaps; then
+            echo "Swap file $SWAP_FILE is already mounted."
+        else
+            echo "Mounting swap file..."
+            swapon "$SWAP_FILE"
+        fi
+    else
+        echo "Swap file not found at $SWAP_FILE"
+    fi
+}
+
+stop() {
+    if grep -q "$SWAP_FILE" /proc/swaps; then
+        echo "Unmounting swap file..."
+        swapoff "$SWAP_FILE"
+    else
+        echo "Swap file $SWAP_FILE is not mounted."
+    fi
+}
+
+case "$1" in
+    start) start ;;
+    stop) stop ;;
+    restart) stop; start ;;
+    *) start ;;
+esac

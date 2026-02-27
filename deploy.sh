@@ -39,13 +39,25 @@ sed "s/YOUR_TARGET_IPS/$TARGETS/g" jffs/scripts/nat-start > /jffs/scripts/nat-st
 echo "Copying Xray launcher..."
 cp opt/etc/init.d/S99xray /opt/etc/init.d/S99xray
 
+# Copy swap mounter
+echo "Copying Swap mounter..."
+cp opt/etc/init.d/S01swap /opt/etc/init.d/S01swap
+
 # 7. chmod
 echo "Setting permissions..."
 chmod +x /opt/etc/init.d/S98do-tunnel
 chmod +x /opt/etc/init.d/S99xray
+chmod +x /opt/etc/init.d/S01swap
 chmod +x /jffs/scripts/nat-start
 
 # 8. Restart services
+echo "Mounting swap..."
+if [ -x /opt/etc/init.d/S01swap ]; then
+    /opt/etc/init.d/S01swap start
+else
+    echo "Warning: /opt/etc/init.d/S01swap is not executable or found."
+fi
+
 echo "Restarting Xray and Tunnel..."
 if [ -x /opt/etc/init.d/S99xray ]; then
     /opt/etc/init.d/S99xray restart
