@@ -101,7 +101,10 @@
           "domain:digital-cdn.net",
           "domain:gemini.google.com",
           "domain:aistudio.google.com",
-          "domain:googleapis.com"
+          "domain:ai.google.dev",
+          "full:alkalimining-pa.googleapis.com",
+          "full:proactivebackend-pa.googleapis.com",
+          "full:generativelanguage.googleapis.com"
         ],
         "outboundTag": "proxy-ca"
       },
