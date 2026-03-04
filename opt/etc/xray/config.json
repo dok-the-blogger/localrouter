@@ -117,7 +117,11 @@
           "domain:facebook.com",
           "domain:fbcdn.net",
           "domain:fbsbx.com",
-          "domain:meta.com"
+          "domain:meta.com",
+          "geosite:whatsapp",
+          "domain:whatsapp.com",
+          "domain:whatsapp.net",
+          "domain:wa.me"
         ],
         "outboundTag": "proxy-ca"
       }
