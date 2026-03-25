@@ -13,7 +13,10 @@
       },
       "sniffing": {
         "enabled": true,
-        "destOverride": ["http", "tls"]
+        "destOverride": [
+          "http",
+          "tls"
+        ]
       }
     }
   ],
@@ -79,7 +82,28 @@
       },
       {
         "type": "field",
-        "ip": ["geoip:private"],
+        "ip": [
+          "geoip:private"
+        ],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "domain:sberbank.ru",
+          "domain:sber.ru",
+          "domain:sberbank.com",
+          "domain:alfabank.ru",
+          "domain:tinkoff.ru",
+          "domain:vtb.ru",
+          "domain:gosuslugi.ru",
+          "domain:nalog.gov.ru",
+          "domain:mos.ru",
+          "domain:coinmarketcap.com",
+          "domain:yandex.ru",
+          "domain:yandex.net",
+          "domain:ya.ru"
+        ],
         "outboundTag": "direct"
       },
       {
