@@ -18,7 +18,12 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-log() { echo "$1" | tee -a "$LOG"; }
+log() {
+    # Print with colors to screen
+    echo -e "$1"
+    # Write without colors to log
+    echo "$1" | sed -r 's/\x1b\[[0-9;]*m//g' >> "$LOG"
+}
 header() { log ""; log "${CYAN}=== $1 ===${NC}"; }
 ok() { log "  ${GREEN}[OK]${NC} $1"; }
 fail() { log "  ${RED}[FAIL]${NC} $1"; }
@@ -30,6 +35,14 @@ log "Log file: $LOG"
 # ============================================================
 header "1. HARDWARE & RESOURCES"
 # ============================================================
+
+# Xray version
+if command -v xray >/dev/null 2>&1; then
+    XRAY_VER=$(xray version 2>/dev/null | head -1)
+    ok "Xray: $XRAY_VER"
+else
+    warn "Xray executable not found in PATH"
+fi
 
 # Uptime
 UPTIME=$(uptime)
@@ -109,7 +122,7 @@ header "5. DIRECT CONNECTIVITY (from router, bypassing proxy)"
 # ============================================================
 
 # Тест прямого соединения с сайтами БЕЗ прокси
-for URL in "https://www.google.com" "https://online.sberbank.ru" "https://www.instagram.com" "https://api.coinmarketcap.com/v1/cryptocurrency/listings/latest"; do
+for URL in "https://www.google.com" "https://online.sberbank.ru" "https://www.instagram.com" "https://api.coinmarketcap.com/v1/cryptocurrency/listings/latest" "http://connectivitycheck.gstatic.com/generate_204" "http://captive.apple.com/hotspot-detect.html"; do
     DOMAIN=$(echo "$URL" | sed 's|https\?://||' | cut -d'/' -f1)
     HTTP_CODE=$(curl -so /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 10 "$URL" 2>/dev/null)
     TIME=$(curl -so /dev/null -w '%{time_total}' --connect-timeout 5 --max-time 10 "$URL" 2>/dev/null)
@@ -121,7 +134,7 @@ for URL in "https://www.google.com" "https://online.sberbank.ru" "https://www.in
 done
 
 # ============================================================
-header "6. PROXY CONNECTIVITY (through Shadowsocks)"
+header "6. PROXY CHANNEL STATUS"
 # ============================================================
 
 # Загружаем env для IP Selectel
@@ -144,7 +157,6 @@ for PORT in $SS_RU_PORT $SS_CA_PORT; do
     if echo "" | nc -w 3 "$TARGET" "$PORT" 2>/dev/null; then
         ok "TCP to $TARGET:$PORT — reachable"
     else
-        # nc может не вернуть 0 для SS, пробуем curl через socks
         fail "TCP to $TARGET:$PORT — connection failed or timed out"
     fi
 done
@@ -155,21 +167,6 @@ if curl -so /dev/null -w '%{http_code}' --socks5 127.0.0.1:$SOCKS_PORT --connect
 else
     warn "SOCKS5 tunnel (DO) — not responding (autossh may be down)"
 fi
-
-# Тест: запрос через Xray dokodemo-door (как это делает телефон)
-# Эмулируем то, что делает мобильное устройство
-for URL in "https://online.sberbank.ru" "https://www.instagram.com" "https://api.coinmarketcap.com"; do
-    DOMAIN=$(echo "$URL" | sed 's|https\?://||' | cut -d'/' -f1)
-    HTTP_CODE=$(curl -so /dev/null -w '%{http_code}' --connect-timeout 8 --max-time 15 \
-        --proxy "socks5h://127.0.0.1:$PROXY_PORT" "$URL" 2>/dev/null)
-    TIME=$(curl -so /dev/null -w '%{time_total}' --connect-timeout 8 --max-time 15 \
-        --proxy "socks5h://127.0.0.1:$PROXY_PORT" "$URL" 2>/dev/null)
-    if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 500 ] 2>/dev/null; then
-        ok "VIA XRAY $DOMAIN — HTTP $HTTP_CODE (${TIME}s)"
-    else
-        fail "VIA XRAY $DOMAIN — HTTP $HTTP_CODE (${TIME}s)"
-    fi
-done
 
 # ============================================================
 header "7. IPTABLES RULES (NAT PREROUTING)"
@@ -189,27 +186,38 @@ fi
 header "8. XRAY ROUTING TEST (domain matching)"
 # ============================================================
 
-# Проверяем, куда Xray отправит трафик для ключевых доменов
-# Для этого смотрим конфиг и выводим, что попадает в direct/block/proxy
 XRAY_CONF="/opt/etc/xray/config.json"
 if [ -f "$XRAY_CONF" ]; then
-    # Проверяем: есть ли sberbank в правилах?
-    if grep -qi "sberbank" "$XRAY_CONF"; then
-        ok "sberbank found in Xray routing rules"
-    else
-        warn "sberbank NOT in Xray rules — goes to DEFAULT outbound (proxy-ru via Shadowsocks)"
-    fi
-
-    # Проверяем: есть ли coinmarketcap в правилах?
-    if grep -qi "coinmarketcap" "$XRAY_CONF"; then
-        ok "coinmarketcap found in Xray routing rules"
-    else
-        warn "coinmarketcap NOT in Xray rules — goes to DEFAULT outbound (proxy-ru via Shadowsocks)"
-    fi
-
-    # Какой первый outbound (default)?
     DEFAULT_TAG=$(grep -A2 '"outbounds"' "$XRAY_CONF" | grep '"tag"' | head -1 | sed 's/.*"tag": *"//;s/".*//')
     log "  Default outbound: ${DEFAULT_TAG:-unknown}"
+
+    log ""
+    log "  Routing map for key domains:"
+    log "  --------------------------------------------------"
+
+    for DOMAIN in sberbank.ru coinmarketcap.com instagram.com google.com doubleclick.net; do
+        OUTBOUND=$(awk -v dom="$DOMAIN" '
+            BEGIN { found=0; current_outbound="" }
+            /"rules":/ { in_rules=1 }
+            in_rules && /{/ { in_rule=1; current_outbound="" }
+            in_rules && in_rule && $0 ~ dom { found=1 }
+            in_rules && in_rule && /"outboundTag":/ {
+                current_outbound=$0; sub(/.*"outboundTag": *"/, "", current_outbound); sub(/".*/, "", current_outbound)
+            }
+            in_rules && in_rule && /}/ {
+                if (found && current_outbound != "") { print current_outbound; exit_loop=1 }
+                in_rule=0; found=0
+            }
+            exit_loop { exit }
+        ' "$XRAY_CONF")
+
+        if [ -n "$OUTBOUND" ]; then
+            ok "$DOMAIN -> $OUTBOUND"
+        else
+            warn "$DOMAIN -> DEFAULT ($DEFAULT_TAG)"
+        fi
+    done
+    log "  --------------------------------------------------"
 
     # Есть ли blackhole?
     if grep -q '"blackhole"' "$XRAY_CONF"; then
@@ -228,13 +236,26 @@ fi
 header "9. GEOSITE/GEOIP FILES"
 # ============================================================
 
+NOW=$(date +%s)
 for F in /opt/share/xray/geosite.dat /opt/share/xray/geoip.dat \
          /opt/sbin/geosite.dat /opt/sbin/geoip.dat \
          /opt/etc/xray/geosite.dat /opt/etc/xray/geoip.dat; do
     if [ -f "$F" ]; then
         SIZE=$(ls -lh "$F" | awk '{print $5}')
-        MOD=$(ls -l "$F" | awk '{print $6, $7, $8}')
-        ok "$F — $SIZE, modified $MOD"
+        MOD_STR=$(ls -l "$F" | awk '{print $6, $7, $8}')
+        MOD_TS=$(stat -c %Y "$F" 2>/dev/null) # if stat exists
+
+        if [ -z "$MOD_TS" ]; then
+            # fallback for busybox without stat
+            ok "$F — $SIZE, modified $MOD_STR"
+        else
+            DIFF=$(( (NOW - MOD_TS) / 86400 ))
+            if [ "$DIFF" -gt 30 ]; then
+                warn "$F — $SIZE, modified $MOD_STR ($DIFF days old)"
+            else
+                ok "$F — $SIZE, modified $MOD_STR ($DIFF days old)"
+            fi
+        fi
     fi
 done
 

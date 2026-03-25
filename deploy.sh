@@ -92,6 +92,10 @@ echo "Configuring dnsmasq..."
 mkdir -p /jffs/configs
 cp jffs/configs/dnsmasq.conf.add /jffs/configs/dnsmasq.conf.add
 
+echo "Copying Diagnostic script..."
+cp diag.sh /opt/bin/diag
+chmod +x /opt/bin/diag
+
 echo "Copying DOK Base launcher..."
 cp opt/etc/init.d/S90dokbase /opt/etc/init.d/S90dokbase
 chmod +x /opt/etc/init.d/S90dokbase
