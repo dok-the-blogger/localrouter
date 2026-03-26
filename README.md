@@ -46,10 +46,9 @@ chmod 600 /opt/etc/ssh/do_ss
 ```
 
 ## 3. Деплой
-Теперь процесс развертывания полностью автоматизирован.
-Зайдите в папку с репозиторием на роутере и запустите скрипт:
-
+Репозиторий на роутере: `/tmp/mnt/router_disk/entware/root/repo/`
 ```bash
+cd /tmp/mnt/router_disk/entware/root/repo
 ./deploy.sh
 ```
 
